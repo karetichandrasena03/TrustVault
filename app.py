@@ -34,16 +34,23 @@ def load_user(user_id):
 with app.app_context():
     db.create_all()
 
-def record_audit(event_type, document_id=None, details=None):
-    log = AuditLog(
-        actor_id=current_user.id if current_user.is_authenticated else None,
-        document_id=document_id,
-        event_type=event_type,
-        details=details
-    )
+    admin_username = os.getenv("ADMIN_USERNAME")
+    admin_password = os.getenv("ADMIN_PASSWORD")
 
-    db.session.add(log)
-    db.session.commit()
+    if admin_username and admin_password:
+        existing_admin = User.query.filter_by(
+            username=admin_username
+        ).first()
+
+        if not existing_admin:
+            new_admin = User(
+                username=admin_username,
+                password_hash=generate_password_hash(admin_password),
+                role="admin"
+            )
+
+            db.session.add(new_admin)
+            db.session.commit()
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
