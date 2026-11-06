@@ -1,14 +1,24 @@
 import os
+import uuid
 from dotenv import load_dotenv
 
 load_dotenv()
 from werkzeug.utils import secure_filename
 
-from flask import Flask, send_from_directory
+from flask import Flask, send_from_directory, send_file
+from io import BytesIO
 from flask import render_template, request, redirect, url_for, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from models import db, User, Document, AuditLog, DocumentPermission
+from supabase import create_client
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+
+supabase = None
+
+if SUPABASE_URL and SUPABASE_KEY:
+    supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 app = Flask(__name__)
 
 
@@ -157,7 +167,9 @@ def upload_page():
     if current_user.role != "admin":
         flash("Access denied. Admin only.")
         return redirect(url_for("home"))
+
     if request.method == "POST":
+
         uploaded_file = request.files.get("document")
         category = request.form.get("category", "").strip()
 
@@ -165,39 +177,52 @@ def upload_page():
             flash("Please select a document.")
             return redirect(url_for("upload_page"))
 
-        
         filename = secure_filename(uploaded_file.filename)
 
         if not filename:
             flash("Invalid filename.")
             return redirect(url_for("upload_page"))
 
-        file_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-
-        if os.path.exists(file_path):
-            flash("A file with this name already exists.")
+        if supabase is None:
+            flash("Document storage is not configured.")
             return redirect(url_for("upload_page"))
 
-        uploaded_file.save(file_path)
+        storage_path = f"{current_user.id}/{uuid.uuid4().hex}_{filename}"
 
-        document = Document(
-            filename=filename,
-            file_path=filename,
-            category=category,
-            owner_id=current_user.id
-        )
+        try:
+            supabase.storage.from_("trustvault-documents").upload(
+                storage_path,
+                uploaded_file.read(),
+                file_options={
+                    "content-type": uploaded_file.mimetype or "application/octet-stream",
+                    "upsert": "false"
+                }
+            )
 
-        db.session.add(document)
-        db.session.commit()
-        record_audit(
-            "DOCUMENT_UPLOADED",
-            document.id,
-            f"User {current_user.username} uploaded {filename}"
-        )
+            document = Document(
+                filename=filename,
+                file_path=storage_path,
+                category=category,
+                owner_id=current_user.id
+            )
 
-        flash("Document uploaded successfully!")
+            db.session.add(document)
+            db.session.commit()
+
+            record_audit(
+                "DOCUMENT_UPLOADED",
+                document.id,
+                f"User {current_user.username} uploaded {filename}"
+            )
+
+            flash("Document uploaded successfully!")
+
+        except Exception as e:
+            db.session.rollback()
+            print("Supabase upload error:", e)
+            flash("Document upload failed. Please try again.")
+
         return redirect(url_for("upload_page"))
-
 
     return render_template("upload.html")
 
@@ -437,17 +462,31 @@ def download_document(document_id):
         flash("You are not allowed to download this document.")
         return redirect(url_for("documents_page"))
 
-    record_audit(
-        "DOCUMENT_DOWNLOADED",
-        document.id,
-        f"User {current_user.username} downloaded {document.filename}"
-    )
+    if supabase is None:
+        flash("Document storage is not configured.")
+        return redirect(url_for("documents_page"))
 
-    return send_from_directory(
-        app.config["UPLOAD_FOLDER"],
-        document.file_path,
-        as_attachment=True
-    )
+    try:
+        file_data = supabase.storage.from_("trustvault-documents").download(
+            document.file_path
+        )
+
+        record_audit(
+            "DOCUMENT_DOWNLOADED",
+            document.id,
+            f"User {current_user.username} downloaded {document.filename}"
+        )
+
+        return send_file(
+            BytesIO(file_data),
+            as_attachment=True,
+            download_name=document.filename
+        )
+
+    except Exception as e:
+        print("Supabase download error:", e)
+        flash("Unable to download this document.")
+        return redirect(url_for("documents_page"))
 
 @app.route("/admin-dashboard")
 @login_required
