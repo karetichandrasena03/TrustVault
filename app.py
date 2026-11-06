@@ -31,8 +31,20 @@ login_manager.login_view = "login"
 def load_user(user_id):
     return db.session.get(User, int(user_id))
 
+def record_audit(event_type, document_id=None, details=None):
+    log = AuditLog(
+        actor_id=current_user.id if current_user.is_authenticated else None,
+        document_id=document_id,
+        event_type=event_type,
+        details=details
+    )
+
+    db.session.add(log)
+    db.session.commit()
+
 with app.app_context():
     db.create_all()
+
 
     admin_username = os.getenv("ADMIN_USERNAME")
     admin_password = os.getenv("ADMIN_PASSWORD")
@@ -132,10 +144,10 @@ def upload_page():
         db.session.add(document)
         db.session.commit()
         record_audit(
-    "DOCUMENT_UPLOADED",
-    document.id,
-    f"User {current_user.username} uploaded {filename}"
-)
+            "DOCUMENT_UPLOADED",
+            document.id,
+            f"User {current_user.username} uploaded {filename}"
+        )
 
         flash("Document uploaded successfully!")
         return redirect(url_for("upload_page"))
