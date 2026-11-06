@@ -141,6 +141,10 @@ def home():
 @app.route("/upload", methods=["GET", "POST"])
 @login_required
 def upload_page():
+
+    if current_user.role != "admin":
+        flash("Access denied. Admin only.")
+        return redirect(url_for("home"))
     if request.method == "POST":
         uploaded_file = request.files.get("document")
         category = request.form.get("category", "").strip()
