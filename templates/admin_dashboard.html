@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TrustVault - Admin Dashboard</title>
+</head>
+<body>
+
+    <h1>TrustVault</h1>
+    <h2>Admin Dashboard</h2>
+
+    <h3>Dashboard Overview</h3>
+
+    <p>Total Registered Users: {{ total_users }}</p>
+
+    <p>Total Uploaded Documents: {{ total_documents }}</p>
+
+    <p>Total Audit Activities: {{ total_audit_logs }}</p>
+
+    <hr>
+
+    <h3>Registered Users</h3>
+
+    {% if users %}
+        <table border="1" cellpadding="10">
+            <tr>
+                <th>User ID</th>
+                <th>Username</th>
+                <th>Role</th>
+            </tr>
+
+            {% for user in users %}
+            <tr>
+                <td>{{ user.id }}</td>
+                <td>{{ user.username }}</td>
+                <td>{{ user.role }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No users found.</p>
+    {% endif %}
+
+    <hr>
+
+    <h3>Uploaded Documents</h3>
+
+    {% if documents %}
+        <table border="1" cellpadding="10">
+            <tr>
+                <th>Document ID</th>
+                <th>Filename</th>
+                <th>Category</th>
+                <th>Owner ID</th>
+                <th>Uploaded At</th>
+            </tr>
+
+            {% for document in documents %}
+            <tr>
+                <td>{{ document.id }}</td>
+                <td>{{ document.filename }}</td>
+                <td>{{ document.category }}</td>
+                <td>{{ document.owner_id }}</td>
+                <td>{{ document.uploaded_at }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No documents found.</p>
+    {% endif %}
+
+    <br>
+
+    <a href="/">Back to Home</a>
+
+    <br><br>
+
+    <a href="/audit">View Audit Trail</a>
+
+</body>
+</html>

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TrustVault - Audit Trail</title>
+</head>
+<body>
+
+    <h1>TrustVault</h1>
+    <h2>Audit Trail</h2>
+
+    {% if logs %}
+        <table border="1">
+            <tr>
+                <th>User ID</th>
+                <th>Document ID</th>
+                <th>Activity</th>
+                <th>Details</th>
+                <th>Date and Time</th>
+            </tr>
+
+            {% for log in logs %}
+            <tr>
+                <td>{{ log.actor_id }}</td>
+                <td>{{ log.document_id }}</td>
+                <td>{{ log.event_type }}</td>
+                <td>{{ log.details }}</td>
+                <td>{{ log.timestamp }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No activity recorded yet.</p>
+    {% endif %}
+
+    <p><a href="/">Back to Home</a></p>
+    <p><a href="/documents">View Documents</a></p>
+
+</body>
+</html>

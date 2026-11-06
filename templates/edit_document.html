@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TrustVault - Edit Document</title>
+</head>
+<body>
+
+    <h1>TrustVault</h1>
+    <h2>Edit Document Details</h2>
+
+    <form method="POST">
+
+        <label>Filename:</label><br>
+        <input
+            type="text"
+            name="filename"
+            value="{{ document.filename }}"
+            required
+        >
+
+        <br><br>
+
+        <label>Category:</label><br>
+        <input
+            type="text"
+            name="category"
+            value="{{ document.category or '' }}"
+        >
+
+        <br><br>
+
+        <button type="submit">Save Changes</button>
+
+    </form>
+
+    <br>
+
+    <a href="/documents">Back to My Documents</a>
+
+</body>
+</html>

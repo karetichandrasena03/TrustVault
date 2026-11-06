@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TrustVault - Document Permissions</title>
+</head>
+<body>
+
+    {% with messages = get_flashed_messages() %}
+    {% for message in messages %}
+        <p style="color: green;">{{ message }}</p>
+    {% endfor %}
+{% endwith %}
+
+    <h1>TrustVault</h1>
+    <h2>Grant Document Permission</h2>
+
+    <form method="POST">
+
+        <label>Document ID:</label>
+        <input type="number" name="document_id" required>
+        <br><br>
+
+        <label>Username:</label>
+        <input type="text" name="username" required>
+        <br><br>
+
+        <label>
+            <input type="checkbox" name="can_read">
+            Allow Reading
+        </label>
+        <br><br>
+
+        <label>
+            <input type="checkbox" name="can_edit">
+            Allow Editing
+        </label>
+        <br><br>
+
+        <button type="submit">Grant Permission</button>
+
+    </form>
+
+    <p><a href="/documents">Back to Documents</a></p>
+    <p><a href="/">Back to Home</a></p>
+<hr>
+
+<h2>Revoke Document Permission</h2>
+
+<form method="POST" action="/revoke-permission">
+
+    <label>Document ID:</label>
+    <input type="number" name="document_id" required>
+
+    <br><br>
+
+    <label>Username:</label>
+    <input type="text" name="username" required>
+
+    <br><br>
+
+    <button type="submit">Revoke Permission</button>
+
+</form>
+</body>
+</html>

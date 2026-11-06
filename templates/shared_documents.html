@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>TrustVault - Shared Documents</title>
+</head>
+<body>
+
+    <h1>TrustVault</h1>
+    <h2>Documents Shared With Me</h2>
+
+    {% if documents %}
+        <table border="1" cellpadding="10">
+            <tr>
+                <th>Document ID</th>
+                <th>Filename</th>
+                <th>Category</th>
+                <th>Download</th>
+            </tr>
+
+            {% for document in documents %}
+            <tr>
+                <td>{{ document.id }}</td>
+                <td>{{ document.filename }}</td>
+                <td>{{ document.category }}</td>
+                <td>
+                    <a href="{{ url_for('download_document', document_id=document.id) }}">
+                        Download
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>No documents have been shared with you yet.</p>
+    {% endif %}
+
+    <br>
+    <a href="/">Back to Home</a>
+
+</body>
+</html>
