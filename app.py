@@ -64,6 +64,36 @@ with app.app_context():
             db.session.add(new_admin)
             db.session.commit()
 
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "")
+
+        if not username or not password:
+            flash("Please enter username and password.")
+            return redirect(url_for("register"))
+
+        existing_user = User.query.filter_by(username=username).first()
+
+        if existing_user:
+            flash("Username already exists.")
+            return redirect(url_for("register"))
+
+        new_user = User(
+            username=username,
+            password_hash=generate_password_hash(password),
+            role="viewer"
+        )
+
+        db.session.add(new_user)
+        db.session.commit()
+
+        flash("Registration successful! Please log in.")
+        return redirect(url_for("login"))
+
+    return render_template("register.html")
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
