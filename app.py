@@ -21,6 +21,7 @@ if SUPABASE_URL and SUPABASE_KEY:
     supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 app = Flask(__name__)
 
+app.config["MAX_CONTENT_LENGTH"] = 11 * 1024 * 1024
 
 UPLOAD_FOLDER = os.path.join(app.instance_path, "uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -133,6 +134,7 @@ def login():
 
     return render_template("login.html")
 
+
 @app.route("/")
 @login_required
 def home():
@@ -160,6 +162,7 @@ def home():
     <a href="/logout">Logout</a>
     """
 
+
 @app.route("/upload", methods=["GET", "POST"])
 @login_required
 def upload_page():
@@ -183,6 +186,33 @@ def upload_page():
             flash("Invalid filename.")
             return redirect(url_for("upload_page"))
 
+        allowed_extensions = {
+            "pdf", "doc", "docx", "txt",
+            "jpg", "jpeg", "png"
+        }
+
+        if "." not in filename:
+            flash("File must have a valid extension.")
+            return redirect(url_for("upload_page"))
+
+        extension = filename.rsplit(".", 1)[1].lower()
+
+        if extension not in allowed_extensions:
+            flash("File type not allowed.")
+            return redirect(url_for("upload_page"))
+
+        file_data = uploaded_file.read()
+
+        max_file_size = 10 * 1024 * 1024
+
+        if len(file_data) > max_file_size:
+            flash("File size must not exceed 10 MB.")
+            return redirect(url_for("upload_page"))
+
+        if len(file_data) == 0:
+            flash("Empty files are not allowed.")
+            return redirect(url_for("upload_page"))
+
         if supabase is None:
             flash("Document storage is not configured.")
             return redirect(url_for("upload_page"))
@@ -192,7 +222,7 @@ def upload_page():
         try:
             supabase.storage.from_("trustvault-documents").upload(
                 storage_path,
-                uploaded_file.read(),
+                file_data,
                 file_options={
                     "content-type": uploaded_file.mimetype or "application/octet-stream",
                     "upsert": "false"
@@ -225,6 +255,7 @@ def upload_page():
         return redirect(url_for("upload_page"))
 
     return render_template("upload.html")
+
 
 @app.route("/documents")
 @login_required

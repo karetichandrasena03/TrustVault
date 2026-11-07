@@ -9,6 +9,13 @@
 <body>
     <h1>TrustVault</h1>
     <h2>Secure Document Sharing</h2>
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+        {% for message in messages %}
+            <p style="color: red;">{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
 
     <form method="POST" action="/login">
         <label for="username">Username:</label>
